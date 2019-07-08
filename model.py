@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import _init_paths
 import os
 import sys
@@ -1082,7 +1078,6 @@ def main():
         ground_model.fasterRCNN.load_state_dict(checkpoint['model'])
         if 'pooling_mode' in checkpoint.keys():
             cfg.POOLING_MODE = checkpoint['pooling_mode']
-
 
     print('load model successfully!')
 
