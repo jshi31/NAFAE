@@ -13,19 +13,19 @@ with Contextual Similarity and Visual Clustering Losses](http://openaccess.thecv
 * Pytorch >= 0.4.0 (<1.0.0)
 
 ## Installation
-1. Clone the NAFAE repository
+### Clone the NAFAE repository
 ```
 git clone https://github.com/jshi31/NAFAE.git 
 ```
 ### dependencies
-* tensorboardX: Write TensorBoard events with simple function call. Install from [tensorboardX](https://github.com/lanpa/tensorboardX). If you want to visualize the tensorboard events, you may still need to install tensorflow.
 * torchtext: torchtext is for obtaining glove feature. Install from [torchtext](https://github.com/spro/practical-pytorch/blob/master/glove-word-vectors/glove-word-vectors.ipynb)
 * opencv
 
 ### Data Preparation
 1. Please download the dataset from [YouCookII](http://youcook2.eecs.umich.edu) to prepare YouCookII datasets.
 We only need the folder `raw_videos` and the path to it is denoted as `$RAW_VIDEO_DIR`.  
-**Note:** Please ensure that you downloaded all of the 2000 videos. If some videos are missing, please contact the authors to get it. 
+**Note:** Please ensure that you downloaded all of the 2000 videos. If some videos are missing, please contact the authors to get them. 
+2. Parse video into frames
 ```
 cd $ROOT/data/YouCookII 
 python genframes.py --video_dir $RAW_VIDEO_DIR
@@ -34,10 +34,11 @@ The generated frames are stored in `sampled_frames_splnum-1`, under the same par
 ```
 ln -s $PATH_TO_sampled_frames_splnum-1 $ROOT/data/YouCookII/
 ```
-Test dataloader:  
+3. Test dataloader:  
 ```
 python $ROOT/lib/datasets/youcook2.py
 ```
+It is safe if no error reported.
 
 ### Pretrained Model
 

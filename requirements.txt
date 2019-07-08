@@ -1,0 +1,8 @@
+cython
+cffi
+msgpack
+easydict
+matplotlib
+pyyaml
+tensorboardX
+tqdm
