@@ -88,7 +88,7 @@ Please change *checksession*, *checkepoch*, *checkbatch* to the same with the tr
 
 ## Visualization
 1. Visualize groundings
-Specify the *train_vis_freq* and *val_vis_freq* as $n so that the the detected result is visualized with interval $n epoch in `$ROOT/output`
+Specify the *train_vis_freq* and *val_vis_freq* as $n so that the the detected result is visualized in `$ROOT/output` every $n batches
 2. Visualize training curve
 ```
 tensorboard --logdir runs
