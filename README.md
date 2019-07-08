@@ -17,7 +17,7 @@ with Contextual Similarity and Visual Clustering Losses](http://openaccess.thecv
 ```
 git clone https://github.com/jshi31/NAFAE.git 
 ```
-### dependencies
+### Dependencies
 * torchtext: torchtext is for obtaining glove feature. Install from [torchtext](https://github.com/spro/practical-pytorch/blob/master/glove-word-vectors/glove-word-vectors.ipynb)
 * opencv
 
