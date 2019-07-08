@@ -23,15 +23,21 @@ git clone https://github.com/jshi31/NAFAE.git
 * opencv
 
 ### Data Preparation
-
-* **YouCookII**: Please download the dataset from [YouCookII](http://youcook2.eecs.umich.edu) to prepare YouCookII datasets.
-
-`cd $ROOT/data/YouCookII`  
-`python genframes.py --video_dir $RAW_VIDEO_DIR`  
+1. Please download the dataset from [YouCookII](http://youcook2.eecs.umich.edu) to prepare YouCookII datasets.
+We only need the folder `raw_videos` and the path to it is denoted as `$RAW_VIDEO_DIR`.  
+**Note:** Please ensure that you downloaded all of the 2000 videos. If some videos are missing, please contact the authors to get it. 
+```
+cd $ROOT/data/YouCookII 
+python genframes.py --video_dir $RAW_VIDEO_DIR
+```
 The generated frames are stored in `sampled_frames_splnum-1`, under the same parent folder of `$RAW_VIDEO_DIR`, then build a soft link to project directory as   
-`ln -s $PATH_TO_sampled_frames_splnum-1 $ROOT/data/YouCookII/`   
+```
+ln -s $PATH_TO_sampled_frames_splnum-1 $ROOT/data/YouCookII/
+```
 Test dataloader:  
-Go to $ROOT directory `python lib/datasets/youcook2.py`  
+```
+python $ROOT/lib/datasets/youcook2.py
+```
 
 ### Pretrained Model
 
@@ -39,7 +45,7 @@ Create directory ``$ROOT/models/vgg16/pretrain/``
 
 We used [faster RCNN](https://github.com/jwyang/faster-rcnn.pytorch) with VGG16 backbone pretrained on Visual Gnome for region proposals. Download and put the [VGG16 model](http://data.lip6.fr/cadene/faster-rcnn.pytorch/faster_rcnn_1_19_48611.pth) into ``$ROOT/models/vgg16/pretrain/``
 
-### Compilation
+### Compilation FasterRCNN Layers
 
 As pointed out by [ruotianluo/pytorch-faster-rcnn](https://github.com/ruotianluo/pytorch-faster-rcnn), choose the right `-arch` in `make.sh` file, to compile the cuda code:
 
@@ -62,11 +68,7 @@ Compile the cuda dependencies using following simple commands:
 cd lib
 sh make.sh
 ```
-
-It will compile all the modules you need, including NMS, ROI_Pooing, ROI_Align and ROI_Crop. The default version is compiled with Python 2.7, please compile by yourself if you are using a different python version.
-
-**As pointed out in this [issue](https://github.com/jwyang/faster-rcnn.pytorch/issues/16), if you encounter some error during the compilation, you might miss to export the CUDA paths to your environment.**
-
+It will compile all the modules you need, including NMS, ROI_Pooing, ROI_Align and ROI_Crop. 
 
 ## Training 
 ```
