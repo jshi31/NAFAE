@@ -42,24 +42,21 @@ git clone https://github.com/jshi31/vid-cap-ground.git
 
 * **YouCookII**: Please download the dataset from [YouCookII](http://youcook2.eecs.umich.edu) to prepare YouCookII datasets.
 
-`cd $ROOT/data/YouCookII`
-`python genframes.py --video_dir $RAW_VIDEO_DIR`
-The generated frames are stored in `sampled_frames_splnum-1`, under the same parent folder of `$RAW_VIEO_DIR`, then build a soft link to project directory as 
-`ln -s $PATH_TO_sampled_frames_splnum-1 $ROOT/data/YouCookII/`
-Test dataloader:
-Go to $ROOT directory `python lib/datasets/youcook2.py`
+`cd $ROOT/data/YouCookII`  
+`python genframes.py --video_dir $RAW_VIDEO_DIR`  
+The generated frames are stored in `sampled_frames_splnum-1`, under the same parent folder of `$RAW_VIDEO_DIR`, then build a soft link to project directory as   
+`ln -s $PATH_TO_sampled_frames_splnum-1 $ROOT/data/YouCookII/`   
+Test dataloader:  
+Go to $ROOT directory `python lib/datasets/youcook2.py`  
 
-### Language Processing Preprocessing Preparation
-1. run `python`
-2. run `nltk.download('wordnet')`
-3. run `nltk.download('punkt')`
-4. run `nltk.download('averaged_perceptron_tagger')`
 ### Pretrained Model
 
-go to project root directory ``ROOT``, create directory ``ROOT/models/vgg16/pretrain/`` and directory ``ROOT/output/``
+Create directory ``$ROOT/models/vgg16/pretrain/`` 
 
-We used pretrained models in our experiments, VGG16 pretrained on gnome. You can download the pytorch model [VGG-16](http://data.lip6.fr/cadene/faster-rcnn.pytorch/faster_rcnn_1_19_48611.pth) 
+We used faster RCNN with VGG16 backbone pretrained on gnome for region proposals. Put the [VGG16 model](http://data.lip6.fr/cadene/faster-rcnn.pytorch/faster_rcnn_1_19_48611.pth) into ``ROOT/models/vgg16/pretrain/``
 
+### Pretrained Final Model 
+Create directory ``$ROOT/output/models/vgg16/YouCookII/``
 ### Compilation
 
 As pointed out by [ruotianluo/pytorch-faster-rcnn](https://github.com/ruotianluo/pytorch-faster-rcnn), choose the right `-arch` in `make.sh` file, to compile the cuda code:

@@ -8,33 +8,19 @@ import pdb
 import time
 import cv2
 import pickle
-import glob
-from collections import OrderedDict
 
 from tensorboardX import SummaryWriter
 
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import torch.nn.functional as F
 import torchtext.vocab as vocab
-import torchvision.transforms as transforms
-import torchvision.datasets as dset
-from scipy.misc import imread
-from roi_data_layer.roidb import combined_roidb
-from roi_data_layer.roibatchLoader import roibatchLoader
-from datasets.youcook2 import GroundDataSet, MPrpDataSet, SubsetSampler, MPrpBatchSampler
+from datasets.youcook2 import MPrpDataSet, SubsetSampler, MPrpBatchSampler
 from datasets.youcook_eval import parse_gt, evaluate_phrase, evaluate_box
 from model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
-from model.rpn.bbox_transform import clip_boxes
-from model.nms.nms_wrapper import nms
-from model.rpn.bbox_transform import bbox_transform_inv
 from model.utils.net_utils import save_net, load_net, vis_detections, vis_grounds, vis_box_order, vis_single_det, vis_det
-from model.utils.blob import im_list_to_blob
 from model.utils.net_utils import save_checkpoint
-from model.utils.misc import visfeat
 from model.faster_rcnn.vgg16_rpn import vgg16
-from model.faster_rcnn.resnet import resnet
 from model.transformer.SubLayers import MultiHeadAttention
 from model.transformer.Models import position_encoding_general as position_encoding_init
 try:
@@ -1151,6 +1137,8 @@ def main():
 
     # write best accuracy to file pythonfile.best
     python_file = __file__.split('/')[-1].split('.')[0]
+    if not os.path.exists('.optm'):
+        os.makedirs('.optm')
     with open('.optm/{}.best'.format(python_file), 'w') as f:
         f.write('{}'.format(best_accuracy))
 
