@@ -40,7 +40,7 @@ python $ROOT/lib/datasets/youcook2.py
 ```
 It is safe if no error reported.
 
-### Pretrained Model
+### Model Preparation
 
 Create directory ``$ROOT/models/vgg16/pretrain/`` 
 
