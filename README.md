@@ -91,7 +91,7 @@ Please change *checksession*, *checkepoch*, *checkbatch* to the same with the tr
 Specify the *train_vis_freq* and *val_vis_freq* as $n so that the the detected result is visualized with interval $n epoch in `$ROOT/output`
 2. Visualize training curve
 ```
-tensorboard --log_dir runs
+tensorboard --logdir runs
 ```
 
 ## Pretrained Final Model 
