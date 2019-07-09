@@ -90,5 +90,4 @@ target/
 .db
 
 # DataSet
-.data/YouCookII/raw_videos
 .data/YouCookII/sampled_frames_splnum-1
