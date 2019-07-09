@@ -44,7 +44,7 @@ It is safe if no error reported.
 
 Create directory ``$ROOT/models/vgg16/pretrain/`` 
 
-We used [faster RCNN](https://github.com/jwyang/faster-rcnn.pytorch) with VGG16 backbone pretrained on Visual Gnome for region proposals. Download and put the [VGG16 model](http://data.lip6.fr/cadene/faster-rcnn.pytorch/faster_rcnn_1_19_48611.pth) into ``$ROOT/models/vgg16/pretrain/``
+We used [faster RCNN](https://github.com/jwyang/faster-rcnn.pytorch) with VGG16 backbone pretrained on Visual Gnome for region proposals. Download and put the [VGG16 model](http://data.lip6.fr/cadene/faster-rcnn.pytorch/faster_rcnn_1_19_48611.pth) as ``$ROOT/models/vgg16/pretrain/faster_rcnn_gnome.pth``
 
 ### Compilation FasterRCNN Layers
 
