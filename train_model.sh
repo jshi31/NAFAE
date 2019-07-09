@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=0 python model.py --cuda --phase train --checksession 0 --checkepoch 0 --checkbatch 1290  --shuffle_train --fix_seg_len --Delta 10 --vis_lam 4.13 --workers 4 --epoch 30 --train_vis_freq 10000 --val_vis_freq 10000 --statement train

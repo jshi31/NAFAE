@@ -2,62 +2,51 @@
 
 ## Introduction
 
-This project is aim for reduplicate the paper in pytorch
+This project is the Pytorch implementation of [Not All Frames Are Equal: Weakly-Supervised Video Grounding
+with Contextual Similarity and Visual Clustering Losses](http://openaccess.thecvf.com/content_CVPR_2019/papers/Shi_Not_All_Frames_Are_Equal_Weakly-Supervised_Video_Grounding_With_Contextual_CVPR_2019_paper.pdf) in [CVPR 2019](http://cvpr2019.thecvf.com/).  
+**Video Grounding Definition**: Given a video segment with its language description, the aim is to localize objects query from the description to the video.
 
-* [Finding “It”: Weakly-Supervised Reference-Aware Visual Grounding in Instructional Videos](http://ai.stanford.edu/~dahuang/papers/cvpr18-ramil.pdf)
+**Note**: this repository only provides the implementation for Finite Class Training mode for YouCookII Dataset.
 
-For the visual part, a RPN is used in the repo
-* [jwyang/faster-rcnn.pytorch](https://github.com/jwyang/faster-rcnn.pytorch)
+## Prerequisites
+* Python >= 3.6
+* Pytorch >= 0.4.0 (<1.0.0)
 
-The basenet is 
-
-Visual Genome (Train/Test: vg_train/vg_test, scale=600, max_size=1000, ROI Align, category=2500)
-
-model     | #GPUs | batch size |lr        | lr_decay | max_epoch     |  time/epoch | mem/GPU | mAP 
----------|--------|-----|--------|-----|-----|-------|--------|----- 
-[VGG-16](http://data.lip6.fr/cadene/faster-rcnn.pytorch/faster_rcnn_1_19_48611.pth)    | 1 P100 | 4    |1e-3| 5   | 20  |  3.7 hr    |12707 MB  | 4.4
-
-
-## Preparation 
-
-First of all, clone the code
+## Installation
+### Clone the NAFAE repository
 ```
-git clone https://github.com/jshi31/vid-cap-ground.git 
+git clone https://github.com/jshi31/NAFAE.git 
 ```
-
-### prerequisites
-
-* Python 3.6
-* Pytorch 0.4.0 (<1.0.0)
-* CUDA 8.0 or higher
-### dependencies
-* tensorboardX: Write TensorBoard events with simple function call. Install from [tensorboardX](https://github.com/lanpa/tensorboardX). If you want to visualize the tensorboard events, you may still need to install tensorflow.
+### Dependencies
 * torchtext: torchtext is for obtaining glove feature. Install from [torchtext](https://github.com/spro/practical-pytorch/blob/master/glove-word-vectors/glove-word-vectors.ipynb)
 * opencv
-* PWCNet: PWCNet get optical flow for linking tubes. Install from [PWCNet](https://github.com/NVlabs/PWC-Net/tree/master/PyTorch)
-* nltk
-
 
 ### Data Preparation
-
-* **YouCookII**: Please download the dataset from [YouCookII](http://youcook2.eecs.umich.edu) to prepare YouCookII datasets.
-
-`cd $ROOT/data/YouCookII`  
-`python genframes.py --video_dir $RAW_VIDEO_DIR`  
+1. Please download the dataset from [YouCookII](http://youcook2.eecs.umich.edu) to prepare YouCookII datasets.
+We only need the folder `raw_videos` and the path to it is denoted as `$RAW_VIDEO_DIR`.  
+**Note:** Please ensure that you downloaded all of the 2000 videos. If some videos are missing, please contact the authors to get them. 
+2. Parse video into frames
+```
+cd $ROOT/data/YouCookII 
+python genframes.py --video_dir $RAW_VIDEO_DIR
+```
 The generated frames are stored in `sampled_frames_splnum-1`, under the same parent folder of `$RAW_VIDEO_DIR`, then build a soft link to project directory as   
-`ln -s $PATH_TO_sampled_frames_splnum-1 $ROOT/data/YouCookII/`   
-Test dataloader:  
-Go to $ROOT directory `python lib/datasets/youcook2.py`  
+```
+ln -s $PATH_TO_sampled_frames_splnum-1 $ROOT/data/YouCookII/
+```
+3. Test dataloader:  
+```
+python $ROOT/lib/datasets/youcook2.py
+```
+It is safe if no error reported.
 
-### Pretrained Model
+### Model Preparation
 
 Create directory ``$ROOT/models/vgg16/pretrain/`` 
 
-We used faster RCNN with VGG16 backbone pretrained on gnome for region proposals. Put the [VGG16 model](http://data.lip6.fr/cadene/faster-rcnn.pytorch/faster_rcnn_1_19_48611.pth) into ``ROOT/models/vgg16/pretrain/``
+We used [faster RCNN](https://github.com/jwyang/faster-rcnn.pytorch) with VGG16 backbone pretrained on Visual Gnome for region proposals. Download and put the [VGG16 model](http://data.lip6.fr/cadene/faster-rcnn.pytorch/faster_rcnn_1_19_48611.pth) into ``$ROOT/models/vgg16/pretrain/``
 
-### Pretrained Final Model 
-Create directory ``$ROOT/output/models/vgg16/YouCookII/``
-### Compilation
+### Compilation FasterRCNN Layers
 
 As pointed out by [ruotianluo/pytorch-faster-rcnn](https://github.com/ruotianluo/pytorch-faster-rcnn), choose the right `-arch` in `make.sh` file, to compile the cuda code:
 
@@ -68,8 +57,6 @@ As pointed out by [ruotianluo/pytorch-faster-rcnn](https://github.com/ruotianluo
 | GTX 1080 (Ti) | sm_61 |
 | Grid K520 (AWS g2.2xlarge) | sm_30 |
 | Tesla K80 (AWS p2.xlarge) | sm_37 |
-
-More details about setting the architecture can be found [here](https://developer.nvidia.com/cuda-gpus) or [here](http://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/)
 
 Install all the python dependencies using pip:
 ```
@@ -82,40 +69,40 @@ Compile the cuda dependencies using following simple commands:
 cd lib
 sh make.sh
 ```
+It will compile all the modules you need, including NMS, ROI_Pooing, ROI_Align and ROI_Crop. 
 
-It will compile all the modules you need, including NMS, ROI_Pooing, ROI_Align and ROI_Crop. The default version is compiled with Python 2.7, please compile by yourself if you are using a different python version.
-
-**As pointed out in this [issue](https://github.com/jwyang/faster-rcnn.pytorch/issues/16), if you encounter some error during the compilation, you might miss to export the CUDA paths to your environment.**
-
-
-## Train 
-
-To train a mode, simply run:
+## Training 
 ```
 ./train.sh
 ```
-## Test
+## Evaluation
+Evaluate on test set
+```
+./test_model.sh
+```
+Evaluate on validation set 
 ```
 ./eval_model.sh
 ```
+Please change *checksession*, *checkepoch*, *checkbatch* to the same with the training setting .
 
-#### Upper bound
-
-```bash
-python lib/datasets/youcook_eval.py
+## Visualization
+1. Visualize groundings
+Specify the *train_vis_freq* and *val_vis_freq* as $n so that the the detected result is visualized in `$ROOT/output` every $n batches
+2. Visualize training curve
+```
+tensorboard --logdir runs
 ```
 
-Allbox 160476
-
-## Partial result 
-
-Forward time for RPN is 140 fps in batch size 5
-
-## Report 
-See word [Report](https://www.dropbox.com/s/t4cnqx7jzx5jwo3/Grounding%20Report.docx?dl=0).
-
-## Data loading 
-1. Since the video are extracted with 16 fps, the parameter `sample_rate_val` decide the sample rate. Default 16, which is 1 fps. And this is how the ground truth is annotated. 
- 
+## Pretrained Final Model 
+In order to get the result in our paper, download and put the [Final Model](https://uofr-my.sharepoint.com/:u:/g/personal/jshi31_ur_rochester_edu/EXxsrJ66cyVKsmd4ANQJVfsBl9LeGTecbioaHBUggQGBMg?e=PP4Sho) into ``$ROOT/output/models/vgg16/YouCookII/``. Run 
+```angular2html
+./test_model.sh
+./eval_model.sh
+``` 
+|      | macro box accuracy % | macro query accuracy % |
+|:----:|:--------------------:|:----------------------:|
+|  val |         39.48        |          41.23         |
+| test |         40.62        |          42.36         |
 
    

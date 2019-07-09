@@ -141,22 +141,22 @@ def parse_args():
                         default="sgd", type=str)
     parser.add_argument('--lr', dest='lr',
                         help='starting learning rate',
-                        default=0.01, type=float)
+                        default=0.001, type=float)
     parser.add_argument('--lr_decay_step', dest='lr_decay_step',
                         help='step to do learning rate decay, unit is epoch',
-                        default=5, type=int)
+                        default=20, type=int)
     parser.add_argument('--lr_decay_gamma', dest='lr_decay_gamma',
                         help='learning rate decay ratio',
                         default=0.1, type=float)
     parser.add_argument('--dropout_rate', dest='dropout_rate',
                         help='dropout probability',
-                        default=0, type=float)
+                        default=0.1, type=float)
     parser.add_argument('--clip', dest='clip',
                         help='clip the gradient to prevent overfitting',
                         default=100, type=float)
     parser.add_argument('--weight_decay', dest='weight_decay',
                         help='weight decay for optimizer',
-                        default=0.0001, type=float)
+                        default=0.00001, type=float)
     parser.add_argument('--shuffle_train', dest='shuffle_train',
                         help='training shuffle',
                         action='store_true')
@@ -166,9 +166,6 @@ def parse_args():
     parser.add_argument('--shuffle_val', dest='shuffle_val',
                         help='validation shuffle',
                         default=False, type=bool)
-    parser.add_argument('--vis_lam', dest='vis_lam',
-                        help='balance visual similarity constraint loss and DVSA loss',
-                        default=1, type=float)
 
     # vis embedding param
     parser.add_argument('--vis_fc_dim', dest='vis_fc_dim',
@@ -207,9 +204,9 @@ def parse_args():
     parser.add_argument('--Delta', dest='Delta',
                         help='Delta is for margin in the margin loss',
                         default=1, type=float)
-    parser.add_argument('--lam', dest='lam',
-                        help='weight the loss',
-                        default=0.2, type=float)
+    parser.add_argument('--vis_lam', dest='vis_lam',
+                        help='balance visual similarity constraint loss and DVSA loss',
+                        default=1, type=float)
     # sample number
     parser.add_argument('--entity_type', dest='entity_type',
                         help='entity type of the word, category, [sentence_raw, sentence, noun, category]',
@@ -218,7 +215,7 @@ def parse_args():
                         help='sample number of frame per video segment',
                         default=5, type=int)
     parser.add_argument('--sample_num_val', dest='sample_num_val',
-                        help='sample number of frame per video segment for evaluation',
+                        help='sample number of frame per video segment or evaluation',
                         default=0, type=int)
     parser.add_argument('--sample_rate', dest='sample_rate',
                         help='sample rate of frame per video segment for training',
@@ -265,10 +262,6 @@ def parse_args():
 
     args = parser.parse_args()
     return args
-
-lr = cfg.TRAIN.LEARNING_RATE
-momentum = cfg.TRAIN.MOMENTUM
-weight_decay = cfg.TRAIN.WEIGHT_DECAY
 
 def v2np(var):
     """variable to numpy
@@ -432,6 +425,67 @@ def visualize_single_grounding(D, D_prob, boxes, imgs, word_entities, im_paths):
 ## Word Related Functions
 def get_word(glove, word):
     return glove.vectors[glove.stoi[word]]
+
+def stepRCNN(im_data, im_info, gt_boxes, num_boxes, ground_model):
+    """
+    If the batch size is too large, split the batch into steps with smaller batch size
+    :return:
+    """
+    Ns = im_data.shape[0]
+    # divide Ns into steps, each step with size 160
+    step_size = 64
+    step = int(Ns/step_size)
+    rem = Ns - step*step_size
+    splits = [step_size for i in range(step)]
+    if rem > 0:
+        splits.append(rem)
+    rois_lst = []
+    roi_feats_lst = []
+    fc_feats_lst = []
+    for i, stp in enumerate(splits):
+        s, e = i*step_size, i*step_size + stp
+        rois, roi_scores, roi_feats, fc_feats = ground_model.fasterRCNN(im_data[s:e], im_info[s:e], gt_boxes, num_boxes)
+        rois_lst.append(rois)
+        roi_feats_lst.append(roi_feats)
+        fc_feats_lst.append(fc_feats)
+    rois_lst = torch.cat(rois_lst, 0)
+    roi_feats_lst = torch.cat(roi_feats_lst, 0)
+    fc_feats_lst = torch.cat(fc_feats_lst, 0)
+    return rois_lst, roi_feats_lst, fc_feats_lst
+
+
+def postprocess(D, D_sim, Na, Ns, Nb, Ne):
+    """
+    :param D: grounding result (Na*Ns, Na*Ne)
+    :param D_sim: grounding similarity (Na*Ns, Na*Ne) value scope [0, Nb)
+    :return: D (Na, Ns, Ne)
+    :return D_sim (Na, Ns, Ne)
+    """
+    D_temp = D.reshape(Na, Ns, Na, Ne)
+    D_sim_temp = D_sim.reshape(Na, Ns, Na, Ne)
+
+    D = np.zeros((Na, Ns, Ne), dtype=int)
+    D_sim = np.zeros((Na, Ns, Ne))
+    for act_ind in range(Na):
+        for spl_ind in range(Ns):
+            for ent_ind in range(Ne):
+                D[act_ind, spl_ind, ent_ind] = D_temp[act_ind, spl_ind, act_ind, ent_ind] + act_ind*Ns*Nb + spl_ind*Nb
+                D_sim[act_ind, spl_ind, ent_ind] = D_sim_temp[act_ind, spl_ind, act_ind, ent_ind]
+    return D, D_sim
+
+
+def record_det(img_inds, obj_labels, obj_bboxes, obj_confs, Nb, vid_entities, D, D_sim, img_ids, infer_boxes):
+    Na, Ns, Ne = D.shape
+    for act_ind, entities in enumerate(vid_entities):
+        for spl_ind in range(Ns):
+            for ent_ind, entity in enumerate(entities):
+                box_id_offset = D[act_ind][spl_ind][ent_ind]
+                img_id_offset = box_id_offset//Nb
+                img_inds.append(img_ids[img_id_offset])
+                obj_labels.append(entity)
+                obj_bboxes.append(infer_boxes[box_id_offset])
+                obj_confs.append(D_sim[act_ind][spl_ind][ent_ind])
+
 
 class DVSA(torch.nn.Module):
     def __init__(self, args, cfg):
@@ -624,6 +678,7 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
     # init times
     model_time = 0
     batch_prev = time.time()
+    RCNN_time = 0
     batch_time = 0
 
     for batch_ind, (im_blobs, entities, entities_length, frm_length, rl_seg_inds, seg_nums, im_paths, img_ids) in enumerate(train_loader):
@@ -646,9 +701,11 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
         gt_boxes.data.resize_(1, 1, 5).zero_()
         num_boxes.data.resize_(1).zero_()
 
+        det_tic = time.time()
         # rois (batch, num_boxes, 5)  roi_feats(batch*num_boxes, 512, 7, 7) fc_feats(batch*num_boxes, 4096)
         with torch.no_grad():
             rois, roi_scores, roi_feats, fc_feats = ground_model.fasterRCNN(im_data, im_info, gt_boxes, num_boxes)
+        det_toc = time.time()
 
         # feats (batch*num_boxes, 512)
         vis_feats = ground_model.vis_ebd(fc_feats)
@@ -708,7 +765,7 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
         # get visual grounding loss
         # Df_sim (Na*Ns, Na*Ne)
         # Df (Na*Ns, Na*Ne) value scope [0, Nb)
-        Df, Df_sim, margin_loss = ground_model.DVSA(vis_feats, word_feats, entities_length)
+        D, D_sim, margin_loss = ground_model.DVSA(vis_feats, word_feats, entities_length)
 
         # use L1 loss to minimize the margin loss
         loss = criterion(margin_loss, torch.zeros_like(margin_loss))
@@ -718,11 +775,11 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
         model_toc = time.time()
         batch_time += (model_toc - batch_prev)
         batch_prev = model_toc
-        # print statistics
+        RCNN_time += (det_toc - det_tic)
         model_time += (model_toc - model_tic)
         running_loss += loss.item()
-        print('epoch {:2d}/{:2d} batch {:4d}/{:4d} loss {:.3f} model time {:.3f} batch time {:.3f}'
-              .format(epoch, args.epoch, batch_ind + 1, len(train_loader), running_loss/(batch_ind + 1), model_time/(batch_ind + 1), batch_time/(batch_ind + 1)))
+        print('epoch {:2d}/{:2d} batch {:4d}/{:4d} loss {:.3f} RCNN_time {:.3f} model_time {:.3f} batch_time {:.3f}'
+              .format(epoch, args.epoch, batch_ind + 1, len(train_loader), running_loss/(batch_ind + 1), RCNN_time/(batch_ind + 1), model_time/(batch_ind + 1), batch_time/(batch_ind + 1)))
 
         if int((batch_ind + 1)%args.train_vis_freq) == 0:
             # visualize groundings
@@ -730,74 +787,15 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
             vis_boxes = vis_boxes.reshape(-1, args.sample_num, cfg.TEST.RPN_POST_NMS_TOP_N, 4)
             D, D_sim = v2np(D), v2np(D_sim)
             D, D_sim = postprocess(D, D_sim, Na, Ns, Nb, Ne)
-            # Df_sim (Na*Ns, Ne) D for frame
-            # Df (Na*Ns, Ne) value scope [0, Nb)
-            Df_sim = Df_sim.reshape(-1, Ne)
-            Df = Df.reshape(-1, Ne)
-            visualize_grounding(Df, Df_sim, vis_boxes, vid_ims, vid_entities, vid_im_paths)
+            # D_sim (Na*Ns, Ne) D for frame
+            # D (Na*Ns, Ne) value scope [0, Nb)
+            D_sim = D_sim.reshape(-1, Ne)
+            D = D.reshape(-1, Ne)
+            visualize_grounding(D, D_sim, vis_boxes, vid_ims, vid_entities, vid_im_paths)
 
     writer.add_scalar('loss', running_loss/(batch_ind + 1), epoch)
 
 
-def stepRCNN(im_data, im_info, gt_boxes, num_boxes, ground_model):
-    """
-    If the batch size is too large, split the batch into steps with smaller batch size
-    :return:
-    """
-    Ns = im_data.shape[0]
-    # divide Ns into steps, each step with size 160
-    step_size = 64
-    step = int(Ns/step_size)
-    rem = Ns - step*step_size
-    splits = [step_size for i in range(step)]
-    if rem > 0:
-        splits.append(rem)
-    rois_lst = []
-    roi_feats_lst = []
-    fc_feats_lst = []
-    for i, stp in enumerate(splits):
-        s, e = i*step_size, i*step_size + stp
-        rois, roi_scores, roi_feats, fc_feats = ground_model.fasterRCNN(im_data[s:e], im_info[s:e], gt_boxes, num_boxes)
-        rois_lst.append(rois)
-        roi_feats_lst.append(roi_feats)
-        fc_feats_lst.append(fc_feats)
-    rois_lst = torch.cat(rois_lst, 0)
-    roi_feats_lst = torch.cat(roi_feats_lst, 0)
-    fc_feats_lst = torch.cat(fc_feats_lst, 0)
-    return rois_lst, roi_feats_lst, fc_feats_lst
-
-
-def postprocess(D, D_sim, Na, Ns, Nb, Ne):
-    """
-    :param D: grounding result (Na*Ns, Na*Ne)
-    :param D_sim: grounding similarity (Na*Ns, Na*Ne) value scope [0, Nb)
-    :return: D (Na, Ns, Ne)
-    :return D_sim (Na, Ns, Ne)
-    """
-    D_temp = D.reshape(Na, Ns, Na, Ne)
-    D_sim_temp = D_sim.reshape(Na, Ns, Na, Ne)
-
-    D = np.zeros((Na, Ns, Ne), dtype=int)
-    D_sim = np.zeros((Na, Ns, Ne))
-    for act_ind in range(Na):
-        for spl_ind in range(Ns):
-            for ent_ind in range(Ne):
-                D[act_ind, spl_ind, ent_ind] = D_temp[act_ind, spl_ind, act_ind, ent_ind] + act_ind*Ns*Nb + spl_ind*Nb
-                D_sim[act_ind, spl_ind, ent_ind] = D_sim_temp[act_ind, spl_ind, act_ind, ent_ind]
-    return D, D_sim
-
-
-def record_det(img_inds, obj_labels, obj_bboxes, obj_confs, Nb, vid_entities, D, D_sim, img_ids, infer_boxes):
-    Na, Ns, Ne = D.shape
-    for act_ind, entities in enumerate(vid_entities):
-        for spl_ind in range(Ns):
-            for ent_ind, entity in enumerate(entities):
-                box_id_offset = D[act_ind][spl_ind][ent_ind]
-                img_id_offset = box_id_offset//Nb
-                img_inds.append(img_ids[img_id_offset])
-                obj_labels.append(entity)
-                obj_bboxes.append(infer_boxes[box_id_offset])
-                obj_confs.append(D_sim[act_ind][spl_ind][ent_ind])
 
 def validate(val_loader, ground_model, glove, criterion, epoch, args):
 
