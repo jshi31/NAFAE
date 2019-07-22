@@ -99,10 +99,21 @@ In order to get the result in our paper, download and put the [Final Model](http
 ```angular2html
 ./test_model.sh
 ./eval_model.sh
-``` 
+```
 |      | macro box accuracy % | macro query accuracy % |
 |:----:|:--------------------:|:----------------------:|
 |  val |         39.48        |          41.23         |
 | test |         40.62        |          42.36         |
 
-   
+## Citation
+If you think this paper or repository is helpful, please cite
+```
+@inproceedings{shi2019not,
+  title={Not All Frames Are Equal: Weakly-Supervised Video Grounding With Contextual Similarity and Visual Clustering Losses},
+  author={Shi, Jing and Xu, Jia and Gong, Boqing and Xu, Chenliang},
+  booktitle={Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition},
+  pages={10444--10452},
+  year={2019}
+}
+```
+
