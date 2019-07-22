@@ -95,7 +95,7 @@ tensorboard --logdir runs
 ```
 
 ## Pretrained Final Model 
-In order to get the result in our paper, download and put the [Final Model](https://uofr-my.sharepoint.com/:u:/g/personal/jshi31_ur_rochester_edu/EXxsrJ66cyVKsmd4ANQJVfsBl9LeGTecbioaHBUggQGBMg?e=PP4Sho) into ``$ROOT/output/models/vgg16/YouCookII/``. Run 
+In order to get the result in our paper, download and put the [Final Model](https://uofr-my.sharepoint.com/:u:/g/personal/jshi31_ur_rochester_edu/EXxsrJ66cyVKsmd4ANQJVfsBrKVDvgBKvao7whSN4DUZmA?e=ZqVSp1) into ``$ROOT/output/models/vgg16/YouCookII/``. Run 
 ```angular2html
 ./test_model.sh
 ./eval_model.sh
