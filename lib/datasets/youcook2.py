@@ -209,6 +209,7 @@ class MPrpDataSet(data.Dataset):
         img_paths = []
         for i, img_path in enumerate(image_list):
             #  read image
+            # print(img_path)
             img = cv2.imread(img_path)
             img = img.astype(np.float32, copy=True)
             img -= 127.5

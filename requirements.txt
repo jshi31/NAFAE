@@ -6,3 +6,6 @@ matplotlib
 pyyaml
 tensorboardX
 tqdm
+opencv-python
+torchtext
+nltk

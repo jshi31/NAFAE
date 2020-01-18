@@ -826,10 +826,6 @@ def validate(val_loader, ground_model, glove, criterion, epoch, args):
             class_list.append(line.rstrip('\n'))
 
     # initilize the tensor holder here.
-    im_data = torch.tensor(1, dtype=torch.float).to(device)
-    im_info = torch.tensor(1, dtype=torch.float).to(device)
-    num_boxes = torch.tensor(1, dtype=torch.float).to(device)
-    gt_boxes = torch.tensor(1, dtype=torch.float).to(device)
     ground_model.eval()
     ground_model.DVSA.init_eval()
 
@@ -857,17 +853,13 @@ def validate(val_loader, ground_model, glove, criterion, epoch, args):
         im_scales = [1]*len(im_blobs)
         # im_info_np (h, w, scale)
         im_info_np = np.array([[im_blob.shape[0], im_blob.shape[1], im_scales[0]] for im_blob in im_blobs], dtype=np.float32)
-        im_data_pt = torch.from_numpy(im_blobs.copy())
+        im_data = torch.from_numpy(im_blobs).to(device)
         # -> (batch, channel, h, w)
-        im_data_pt = im_data_pt.permute(0, 3, 1, 2)
-        im_info_pt = torch.from_numpy(im_info_np)
+        im_data = im_data.permute(0, 3, 1, 2)
+        im_info = torch.from_numpy(im_info_np).to(device)
 
-        # put im_data to variable
-        im_data.data.resize_(im_data_pt.size()).copy_(im_data_pt)
-        # put im_info to variable
-        im_info.data.resize_(im_info_pt.size()).copy_(im_info_pt)
-        gt_boxes.data.resize_(1, 1, 5).zero_()
-        num_boxes.data.resize_(1).zero_()
+        gt_boxes = torch.zeros(1, 1, 5, dtype=torch.float, device=device)
+        num_boxes = torch.zeros(1, dtype=torch.float, device=device)
 
         det_tic = time.time()
 
