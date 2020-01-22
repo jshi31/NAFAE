@@ -72,16 +72,16 @@ sh make.sh
 It will compile all the modules you need, including NMS, ROI_Pooing, ROI_Align and ROI_Crop. 
 
 ## Training 
-```
-./train.sh
+```shell
+./train_model.sh
 ```
 ## Evaluation
 Evaluate on test set
-```
+```shell
 ./test_model.sh
 ```
 Evaluate on validation set 
-```
+```shell
 ./eval_model.sh
 ```
 Please change *checksession*, *checkepoch*, *checkbatch* to the same with the training setting .
