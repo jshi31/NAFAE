@@ -656,6 +656,19 @@ class GroundModel(torch.nn.Module):
         # initialize DVSA
         self.DVSA = DVSA(args, cfg)
 
+def save_feat(fc_feats, boxes, file_name):
+    """
+
+    :param fc_feats: (num_boxes, 4096)
+    :param boxes: (num_boxes, 4)
+    :return:
+    """
+    fc_feats = fc_feats.cpu().numpy()
+    boxes = boxes.cpu().numpy()
+    pdb.set_trace()
+    np.save(fc_feats, file_name)
+
+
 
 def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
     # output directory
@@ -711,6 +724,9 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
         vis_feats = ground_model.vis_ebd(fc_feats)
         # (batch, num_boxes, 4)
         boxes = rois.data[:, :, 1:5]
+
+        # save feature
+        save_feat(fc_feats, boxes, im_paths)
 
         pred_boxes = boxes
 

@@ -205,6 +205,7 @@ class MPrpDataSet(data.Dataset):
         image_list = image_lists[seg_ind]
         f_inds = self.get_frm_inds(image_list)
         image_list = [image_list[f_ind] for f_ind in f_inds]
+        print(image_list)
         imgs = []
         img_paths = []
         for i, img_path in enumerate(image_list):
