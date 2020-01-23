@@ -10,7 +10,7 @@ with Contextual Similarity and Visual Clustering Losses](http://openaccess.thecv
 
 ## Prerequisites
 * Python >= 3.6
-* Pytorch >= 0.4.0 (<1.0.0)
+* Pytorch >= 0.4.0 (<1.0.0), cuda >=cuda90
 
 ## Installation
 ### Clone the NAFAE repository

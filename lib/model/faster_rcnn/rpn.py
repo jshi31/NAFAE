@@ -79,7 +79,6 @@ class _fasterRCNN(nn.Module):
                 pooled_feat = F.max_pool2d(pooled_feat, 2, 2)
         elif cfg.POOLING_MODE == 'align':
             pooled_feat = self.RCNN_roi_align(base_feat, rois.view(-1, 5))
-            pdb.set_trace()
         elif cfg.POOLING_MODE == 'pool':
             pooled_feat = self.RCNN_roi_pool(base_feat, rois.view(-1,5))
         # feed pooled features to top model

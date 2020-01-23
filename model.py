@@ -5,6 +5,7 @@ import numpy as np
 import argparse
 import pprint
 import pdb
+import json
 import time
 import cv2
 import pickle
@@ -656,18 +657,29 @@ class GroundModel(torch.nn.Module):
         # initialize DVSA
         self.DVSA = DVSA(args, cfg)
 
-def save_feat(fc_feats, boxes, file_name):
+
+def save_feat(fc_feats, boxes, img_paths, box_dict):
     """
 
     :param fc_feats: (num_boxes, 4096)
-    :param boxes: (num_boxes, 4)
+    :param boxes: (n_frames, num_boxes, 4)
     :return:
     """
-    fc_feats = fc_feats.cpu().numpy()
+    save_dir = 'output/feature'
+    fc_feats = fc_feats.view(-1, 20, 4096).cpu().numpy()
     boxes = boxes.cpu().numpy()
-    pdb.set_trace()
-    np.save(fc_feats, file_name)
+    for i, img_path in enumerate(img_paths):
+        recipe_dir = '/'.join(img_path.split('/')[-4:-1])
+        img_name = img_path.split('/')[-1]
+        frame_id = img_name.replace('.jpg', '')
+        npy_name = frame_id + '.npy'
+        npy_dir = os.path.join(save_dir, recipe_dir)
+        os.makedirs(npy_dir, exist_ok=True)
+        npy_path = os.path.join(npy_dir, npy_name)
 
+        np.save(npy_path, fc_feats[i])
+
+        box_dict[os.path.join(recipe_dir, frame_id)] = boxes[i].tolist()
 
 
 def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
@@ -693,6 +705,8 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
     batch_prev = time.time()
     RCNN_time = 0
     batch_time = 0
+
+    box_dict = {}
 
     for batch_ind, (im_blobs, entities, entities_length, frm_length, rl_seg_inds, seg_nums, im_paths, img_ids) in enumerate(train_loader):
         if max(entities_length) == 0:
@@ -726,7 +740,7 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
         boxes = rois.data[:, :, 1:5]
 
         # save feature
-        save_feat(fc_feats, boxes, im_paths)
+        save_feat(fc_feats, boxes, im_paths, box_dict)
 
         pred_boxes = boxes
 
@@ -811,6 +825,11 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
 
     writer.add_scalar('loss', running_loss/(batch_ind + 1), epoch)
 
+    feature_dir = 'output/feature'
+    with open(os.path.join(feature_dir, '{}_box.json'.format('train')), 'w') as f:
+        json.dump(box_dict, f)
+    print('saved feature in {}!!'.format(feature_dir))
+
 
 
 def validate(val_loader, ground_model, glove, criterion, epoch, args):
@@ -861,6 +880,8 @@ def validate(val_loader, ground_model, glove, criterion, epoch, args):
     # init dets holder
     img_inds, obj_labels, obj_bboxes, obj_confs = [], [], [], []
 
+    box_dict = {}
+
     for batch_ind, (im_blobs, entities, entities_length, frm_length, rl_seg_inds, seg_nums, im_paths, img_ids) in enumerate(val_loader):
         if max(entities_length) == 0:
             continue
@@ -903,6 +924,10 @@ def validate(val_loader, ground_model, glove, criterion, epoch, args):
 
         # (batch, num_boxes, 4)
         boxes = rois.data[:, :, 1:5]
+
+
+        # save feature
+        save_feat(fc_feats, boxes, im_paths, box_dict)
 
         pred_boxes = boxes
 
@@ -984,8 +1009,16 @@ def validate(val_loader, ground_model, glove, criterion, epoch, args):
             D = D.reshape(-1, Ne)
             visualize_single_grounding(D, D_sim, vis_boxes, vid_ims, vid_entities, vid_im_paths)
 
+
+    feature_dir = 'output/feature'
+    with open(os.path.join(feature_dir, '{}_box.json'.format(args.phase)), 'w') as f:
+        json.dump(box_dict, f)
+    print('saved feature in {}!!'.format(feature_dir))
+    exit()
+
     # generate det
     dets = [img_inds, obj_labels, obj_bboxes, obj_confs]
+
 
     # write to output result for evaluation
     # output grounding result for evaluation directory
