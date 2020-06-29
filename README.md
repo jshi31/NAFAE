@@ -95,7 +95,7 @@ tensorboard --logdir runs
 ```
 
 ## Pretrained Final Model 
-In order to get the result in our paper, download and put the Final Model [[gcloud](https://drive.google.com/file/d/1lFHwgVisizBLOqgCNwqVFJhGXOWUpBvZ/view?usp=sharing)][[baidu cloud](https://pan.baidu.com/s/1uYfh4LKqfjDt1UsNSTc1dw), psword:nhq8] into ``$ROOT/output/models/vgg16/YouCookII/``. Run 
+In order to get the result in our paper, download and put the Final Model ([[gcloud](https://drive.google.com/file/d/1lFHwgVisizBLOqgCNwqVFJhGXOWUpBvZ/view?usp=sharing)] or [[baidu cloud](https://pan.baidu.com/s/1uYfh4LKqfjDt1UsNSTc1dw), psword:nhq8]) into ``$ROOT/output/models/vgg16/YouCookII/``. Run 
 ```angular2html
 ./test_model.sh
 ./eval_model.sh
